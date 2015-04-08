@@ -29,12 +29,17 @@ import pwd
 import grp
 import os
 import shlex
+import ConfigParser
 
 from slapos.recipe.librecipe import GenericBaseRecipe
 
 def login_shell(args):
   password = args['password']
-  
+  if args.get('knowledge0_cfg'):
+    parser = ConfigParser.ConfigParser()
+    parser.read(args['knowledge0_cfg'])
+    password = parser.get('public', 'shell-password')
+
   if (password != ''):
     entered_password = getpass()
   else:
@@ -96,7 +101,8 @@ class Recipe(GenericBaseRecipe):
       '%s.login_shell' % __name__,
       {
         'password': self.options['password'],
-        'shell': self.options['shell']
+        'shell': self.options['shell'],
+        'knowledge0_cfg': self.options.get('knowledge0_cfg')
       }
     )
     path_list.append(login_shell)
