@@ -1,0 +1,12 @@
+[agent]
+master_url = ${slap-parameter:master_url}
+
+key = ${user-key:output}
+cert = ${user-certificate:output}
+
+timeout = ${slap-parameter:timeout} 
+node_title = ${slap-parameter:node_title} 
+test_title = ${slap-parameter:test_title} 
+project_title = ${slap-parameter:project_title} 
+task_count = ${slap-parameter:task_count} 
+report_url = ${slap-parameter:report_url} 
