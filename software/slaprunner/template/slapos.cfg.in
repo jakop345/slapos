@@ -5,6 +5,7 @@ master_url = http://{{ slaprunner['ipv4'] }}:{{ slaprunner['proxy_port'] }}
 computer_id = slaprunner
 maximal_delay = 0
 root_check = {{ slaprunner['root_check'] }}
+forbid_supervisord_automatic_launch = true
 
 [slapformat]
 partition_amount = {{ slaprunner['partition-amount'] }}
@@ -35,6 +36,7 @@ knowledge0_cfg = {{ slaprunner['knowledge0_file'] }}
 minishell_cwd_file = {{ slaprunner['minishell_cwd_file'] }}
 minishell_history_file = {{ slaprunner['minishell_history_file'] }}
 path = {{ slaprunner['path'] }}
+instance_name = {{ slaprunner['instance_name'] }}
 
 [slapproxy]
 host = {{ slaprunner['ipv4'] }}

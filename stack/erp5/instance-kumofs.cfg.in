@@ -1,16 +1,19 @@
 {% set use_ipv6 = slapparameter_dict.get('use-ipv6', False) -%}
 [buildout]
-extends = {{ logrotate_cfg }}
+extends =
+  {{ logrotate_cfg }}
+  {{ parameter_dict['template-monitor'] }}
 parts +=
-  publish-kumofs-connection-information
+  publish
   kumofs-instance
   logrotate-entry-kumofs
+  resiliency-exclude-file
   promise-kumofs-server
   promise-kumofs-server-listen
   promise-kumofs-gateway
   promise-kumofs-manager
 
-[publish-kumofs-connection-information]
+[publish]
 recipe = slapos.cookbook:publish.serialised
 {% if use_ipv6 -%}
 url = memcached://[${kumofs-instance:ip}]:${kumofs-instance:gateway-port}/
@@ -71,7 +74,14 @@ recipe = slapos.cookbook:mkdirectory
 log = ${buildout:directory}/var/log
 services = ${buildout:directory}/etc/run
 promise = ${buildout:directory}/etc/promise
-kumofs-data = ${buildout:directory}/srv/kumofs
+srv = ${buildout:directory}/srv
+kumofs-data = ${:srv}/kumofs
+
+[resiliency-exclude-file]
+# Generate rdiff exclude file in case of resiliency
+recipe = collective.recipe.template
+input = inline: **
+output = ${directory:srv}/exporter.exclude
 
 # Deploy zope promises scripts
 [promise-template]
@@ -98,3 +108,8 @@ port = ${kumofs-instance:gateway-port}
 <= promise-template
 path = ${directory:promise}/kumofs-manager
 port = ${kumofs-instance:manager-port}
+
+[monitor-instance-parameter]
+monitor-httpd-ipv6 = {{ (ipv6_set | list)[0] }}
+monitor-httpd-port = {{ tcpv4_port + 4 }}
+monitor-title = Kumofs monitor

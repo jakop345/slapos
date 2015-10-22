@@ -1,30 +1,12 @@
 [buildout]
-parts = switch-softwaretype
-eggs-directory = {{ eggs_directory }}
-develop-eggs-directory = {{ develop_eggs_directory }}
-
-[slap-configuration]
-recipe = slapos.cookbook:slapconfiguration.serialised
-computer = ${slap-connection:computer-id}
-partition = ${slap-connection:partition-id}
-url = ${slap-connection:server-url}
-key = ${slap-connection:key-file}
-cert = ${slap-connection:cert-file}
+extends = {{ instance_common_cfg }}
 
 [jinja2-template-base]
-recipe = slapos.recipe.template:jinja2
-rendered = ${buildout:parts-directory}/${:_buildout_section_name_}/${:filename}
-extra-context =
-context =
-    key ipv4_set slap-configuration:ipv4
-    key ipv6_set slap-configuration:ipv6
-    key slapparameter_dict slap-configuration:configuration
-    key computer_id slap-configuration:computer
+context +=
     raw slapos_core_version {{ slapos_core_version }}
-    raw logrotate_cfg {{ template_logrotate_base }}
-    ${:extra-context}
 
 [dynamic-template-cloudooo-parameters]
+cairo = {{ cairo_location }}
 cups = {{ cups_location }}
 dbus = {{ dbus_location }}
 dbus-glib = {{ dbus_glib_location }}
@@ -45,6 +27,7 @@ libffi = {{ libffi_location }}
 libpng12 = {{ libpng12_location }}
 libxcb = {{ libxcb_location }}
 mesa = {{ mesa_location }}
+pixman = {{ pixman_location }}
 xdamage = {{ xdamage_location }}
 xfixes = {{ xfixes_location }}
 zlib = {{ zlib_location }}
@@ -53,25 +36,46 @@ fonts = {{ fonts_location }}
 buildout-bin-directory = {{ buildout_bin_directory }}
 6tunnel = {{ sixtunnel_location }}
 dash = {{ dash_location }}
+template-monitor = {{ dumps(template_monitor) }}
 
 [dynamic-template-cloudooo]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_cloudooo }}
 filename = instance-cloudoo.cfg
 extra-context =
     section parameter_dict dynamic-template-cloudooo-parameters
 
+[dynamic-template-postfix-parameters]
+bin-directory = {{ bin_directory }}
+cyrus-sasl-location = {{ cyrus_sasl_location }}
+openssl = {{ openssl_location }}
+postfix-location = {{ postfix_location }}
+template-postfix-aliases = {{ template_postfix_aliases }}
+template-postfix-main-cf = {{ template_postfix_main_cf }}
+template-postfix-master-cf = {{ template_postfix_master_cf }}
+
+[dynamic-template-postfix]
+< = jinja2-template-base
+template = {{ template_postfix }}
+filename = instance-postfix.cfg
+extensions = jinja2.ext.do
+extra-context =
+    section parameter_dict dynamic-template-postfix-parameters
+    import urllib urllib
+
 [dynamic-template-erp5-parameters]
 local-bt5-repository = {{ local_bt5_repository }}
 
 [dynamic-template-erp5]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_erp5 }}
 filename = instance-erp5.cfg
-extensions = jinja2.ext.do
 extra-context =
     key local_bt5_repository dynamic-template-erp5-parameters:local-bt5-repository
     key openssl_location :openssl-location
+    import urlparse urlparse
+import-list =
+    rawfile root_common {{ root_common }}
 openssl-location = {{ openssl_location }}
 
 [dynamic-template-balancer-parameters]
@@ -83,27 +87,23 @@ bin-directory = {{ bin_directory }}
 dash = {{ dash_location }}
 template-haproxy-cfg = {{ template_haproxy_cfg }}
 template-apache-conf = {{ template_apache_conf }}
-template-monitor = {{ template_monitor }}
+template-monitor = {{ dumps(template_monitor) }}
 
 [dynamic-template-balancer]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_balancer }}
-extensions = jinja2.ext.do
 filename = instance-balancer.cfg
 extra-context =
     section parameter_dict dynamic-template-balancer-parameters
 
 [dynamic-template-zeo-parameters]
 buildout-bin-directory = {{ buildout_bin_directory }}
-6tunnel = {{ sixtunnel_location }}
-dash = {{ dash_location }}
-findutils-location = {{ findutils_location }}
+template-monitor = {{ dumps(template_monitor) }}
 
 [dynamic-template-zeo]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_zeo }}
 filename = instance-zeo.cfg
-extensions = jinja2.ext.do
 extra-context =
     key buildout_directory buildout:directory
     section parameter_dict dynamic-template-zeo-parameters
@@ -114,18 +114,18 @@ bin-directory = {{ bin_directory }}
 zope-conf-template = {{ template_zope_conf }}
 buildout-bin-directory = {{ buildout_bin_directory }}
 6tunnel = {{ sixtunnel_location }}
+coreutils = {{ coreutils_location }}
 dash = {{ dash_location }}
 jsl = {{ jsl_location }}
 link-binary = {{ dumps(zope_link_binary) }}
 userhosts = {{ userhosts_location }}
 runzope-userhosts-preloaded-template = {{ template_runzope_userhosts_preloaded }}
-template-monitor = {{ template_monitor }}
+template-monitor = {{ dumps(template_monitor) }}
 
 [dynamic-template-zope]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_zope }}
 filename = instance-zope.cfg
-extensions = jinja2.ext.do
 extra-context =
     key buildout_directory buildout:directory
     section parameter_dict dynamic-template-zope-parameters
@@ -137,9 +137,10 @@ dcron-location = {{ dcron_location }}
 gzip-location = {{ gzip_location }}
 kumo-location = {{ kumo_location }}
 logrotate-location = {{ logrotate_location }}
+template-monitor = {{ dumps(template_monitor) }}
 
 [dynamic-template-kumofs]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_kumofs }}
 filename = instance-kumofs.cfg
 extra-context =
@@ -147,6 +148,7 @@ extra-context =
 
 [dynamic-template-mariadb-parameters]
 coreutils-location = {{ coreutils_location }}
+dash-location = {{ dash_location }}
 findutils-location = {{ findutils_location }}
 gzip-location = {{ gzip_location }}
 mariadb-location = {{ mariadb_location }}
@@ -154,13 +156,13 @@ template-my-cnf = {{ template_my_cnf }}
 template-mariadb-initial-setup = {{ template_mariadb_initial_setup }}
 link-binary = {{ dumps(mariadb_link_binary) }}
 bin-directory = {{ bin_directory }}
+mariadb-resiliency-after-import-script = {{ mariadb_resiliency_after_import_script }}
 template-monitor = {{ template_monitor }}
 
 [dynamic-template-mariadb]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_mariadb }}
 filename = instance-mariadb.cfg
-extensions = jinja2.ext.do
 extra-context =
     section parameter_dict dynamic-template-mariadb-parameters
 
@@ -171,7 +173,7 @@ dash-location = {{ dash_location }}
 curl-location = {{ curl_location }}
 
 [dynamic-template-create-erp5-site]
-< = jinja2-template-base
+<= jinja2-template-base
 template = {{ template_create_erp5_site }}
 filename = instance-create-erp5-site.cfg
 extra-context =
@@ -203,7 +205,8 @@ kumofs = dynamic-template-kumofs:rendered
 cloudooo = dynamic-template-cloudooo:rendered
 mariadb = dynamic-template-mariadb:rendered
 balancer = dynamic-template-balancer:rendered
-zodb-neo = dynamic-template-neo:rendered
+postfix = dynamic-template-postfix:rendered
 zodb-zeo = dynamic-template-zeo:rendered
+zodb-neo = neo-storage-mysql:rendered
 zope = dynamic-template-zope:rendered
 http-monitor = dynamic-template-http-monitor:rendered

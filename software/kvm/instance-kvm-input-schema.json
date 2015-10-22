@@ -10,8 +10,7 @@
       "type": "integer",
       "default": 1024,
       "minimum": 128,
-      "multipleOf": 128,
-      "maximum": 16384
+      "multipleOf": 128
     },
     "disk-size": {
       "title": "Disk size",
@@ -19,7 +18,7 @@
       "type": "integer",
       "default": 10,
       "minimum": 1,
-      "maximum": 80
+      "maximum": 1000
     },
     "disk-type": {
       "title": "Disk type",
@@ -33,8 +32,17 @@
       "title": "CPU count",
       "description": "Number of CPU cores.",
       "type": "integer",
-      "minimum": 1,
-      "maximum": 8
+      "minimum": 1
+    },
+    "cpu-options": {
+      "title": "CPU Additional options: cores, threads, sockets, maxcpus.",
+      "description": "Additional options to use with cpu-count. Options are separated by coma: [cores=cores][,threads=threads][,sockets=sockets][,maxcpus=maxcpus]. Set this option if you know what you're doing.",
+      "type": "string"
+    },
+    "numa": {
+      "title": "Simulate a multi node NUMA system.",
+      "description": "Simulate a multi node NUMA system. If mem and cpus are omitted, resources are split equally. Each numa option are separated by space: node,nodeid=4,cpus=40-49,mem=64g node,nodeid=1,cpus=10-19,mem=128g. Set this option if you know what you're doing.",
+      "type": "string"
     },
 
     "nbd-host": {
@@ -78,16 +86,87 @@
       "description": "MD5 checksum of virtual hard drive, used if virtual-hard-drive-url is specified.",
       "type": "string"
     },
+    "virtual-hard-drive-gzipped": {
+      "title": "Define if virtual hard drive to download is gzipped",
+      "description": "Define if virtual hard drive to download is gzipped using gzip. This help to reduce size of file to download.",
+      "type": "boolean",
+      "default": false
+    },
+
+    "external-disk-number": {
+      "title": "Number of additional disk to create for virtual machine",
+      "description": "Specify the number of additional disk to create for virtual machine in data folder of SlapOS Node. Requires instance_storage_home to be configured on SlapOS Node.",
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "external-disk-size": {
+      "title": "Size of additional disk to create for virtual machine, in Gigabytes",
+      "description": "Specify the size of additional disk to create for virtual machine in data folder of SlapOS Node. Requires instance_storage_home to be configured on SlapOS Node.",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 1000,
+      "default": 20
+    },
+    "external-disk-format": {
+      "title": "Type of external disk drive to create by QEMU.",
+      "description": "Type of QEMU disk drive, to create.",
+      "type": "string",
+      "default": "qcow2",
+      "enum": ["qcow2", "raw", "vdi", "vmdk", "cloop", "qed"]
+    },
 
     "use-tap": {
       "title": "Use QEMU TAP network interface",
-      "description": "Use QEMU TAP network interface, requires a bridge on SlapOS Node. If false, use user-mode network stack (NAT).",
+      "description": "Use QEMU TAP network interface, might require a bridge on SlapOS Node.",
       "type": "boolean",
       "default": false
+    },
+    "use-nat": {
+      "title": "Use QEMU USER Mode networking",
+      "description": "Use QEMU user-mode network stack (NAT).",
+      "type": "boolean",
+      "default": true
     },
     "nat-rules": {
       "title": "List of rules for NAT of QEMU user mode network stack.",
       "description": "List of rules for NAT of QEMU user mode network stack, as comma-separated list of ports. For each port specified, it will redirect port x of the VM (example: 80) to the port x + 10000 of the public IPv6 (example: 10080). Defaults to \"22 80 443\". Ignored if \"use-tap\" parameter is enabled.",
+      "type": "string"
+    },
+    "enable-vhost": {
+      "title": "Use vhost-net to improve network performance of tap interface",
+      "description": "The vhost-net provides much improved network performance for your VM. Only work if the vhost-net kernel module is loaded and available on host machine, please keep this option off if you're not shure.",
+      "type": "boolean",
+      "default": false
+    },
+    "enable-monitor": {
+      "title": "Deploy monitoring tools",
+      "description": "Deploy monitor instance to this kvm instance. It help to check instance status, log and promise results.",
+      "type": "boolean",
+      "default": true
+    },
+    "enable-http-server": {
+      "title": "Enable local http server",
+      "description": "Set if local http server which serve files to the vm should be deployed. If set to true, get file into the vm with URL: http://10.0.2.100/FILE.",
+      "type": "boolean",
+      "default": false
+    },
+    "httpd-port": {
+      "title": "Local http server port",
+      "description": "Port of the local http server used to share files.",
+      "type": "integer",
+      "default": 8081,
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "authorized-key": {
+      "title": "Public keys to get from all virtual machines.",
+      "description": "Set the public keys to add in your virtual machine. The public key file will be available in the VM via url http://10.0.2.100/authorized_keys if you keep the NAT interface enabled",
+      "type": "string"
+    },
+    "data-to-vm": {
+      "title": "Text content to send to this virtual machine.",
+      "description": "Text content which will be written in a file 'data' of http server of this virtual machine instance. The file will be available via URL: http://10.0.2.100/data in the VM.",
       "type": "string"
     },
     "frontend-instance-guid": {

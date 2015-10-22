@@ -28,7 +28,7 @@ from setuptools import setup, find_packages
 import glob
 import os
 
-version = '0.92'
+version = '1.0.9.dev0'
 name = 'slapos.cookbook'
 long_description = open("README.txt").read() + "\n" + \
     open("CHANGES.txt").read() + "\n"
@@ -87,6 +87,7 @@ setup(name=name,
           'check_page_content = slapos.recipe.check_page_content:Recipe',
           'check_port_listening = slapos.recipe.check_port_listening:Recipe',
           'check_url_available = slapos.recipe.check_url_available:Recipe',
+          'check_parameter = slapos.recipe.check_parameter:Recipe',
           'cloud9 = slapos.recipe.cloud9:Recipe',
           'cloudooo.test = slapos.recipe.erp5_test:CloudoooRecipe',
           'condor = slapos.recipe.condor:Recipe',
@@ -166,6 +167,7 @@ setup(name=name,
           'proactive = slapos.recipe.proactive:Recipe',
           'publish = slapos.recipe.publish:Recipe',
           'publish.serialised = slapos.recipe.publish:Serialised',
+          'publish-early = slapos.recipe.publish_early:Recipe',
           'publishsection = slapos.recipe.publish:PublishSection',
           'publishurl = slapos.recipe.publishurl:Recipe',
           'readline = slapos.recipe.readline:Recipe',
@@ -174,6 +176,7 @@ setup(name=name,
           'request.serialised = slapos.recipe.request:Serialised',
           'request.edge = slapos.recipe.request:RequestEdge',
           'requestoptional = slapos.recipe.request:RequestOptional',
+          're6stnet.registry = slapos.recipe.re6stnet:Recipe',
           'reverseproxy.nginx = slapos.recipe.reverse_proxy_nginx:Recipe',
           'seleniumrunner = slapos.recipe.seleniumrunner:Recipe',
           'sheepdogtestbed = slapos.recipe.sheepdogtestbed:SheepDogTestBed',
@@ -181,6 +184,7 @@ setup(name=name,
           'shellinabox = slapos.recipe.shellinabox:Recipe',
           'signalwrapper= slapos.recipe.signal_wrapper:Recipe',
           'simplelogger = slapos.recipe.simplelogger:Recipe',
+          'simplehttpserver = slapos.recipe.simplehttpserver:Recipe',
           'siptester = slapos.recipe.siptester:SipTesterRecipe',
           'slapconfiguration = slapos.recipe.slapconfiguration:Recipe',
           'slapconfiguration.serialised = slapos.recipe.slapconfiguration:Serialised',
@@ -219,6 +223,5 @@ setup(name=name,
         ],
       },
       test_suite='slapos.test',
-      test_requires=[ 'jsonschema' ],
+      tests_require=[ 'jsonschema' ],
     )
-

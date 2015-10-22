@@ -7,6 +7,7 @@
 {%   do test_database_list.append({'name': 'erp5_test_' ~ database_count, 'user': 'testuser_' ~ database_count, 'password': 'testpassword' ~ database_count}) -%}
 {% endfor -%}
 {% set catalog_backup = slapparameter_dict.get('catalog-backup', {}) -%}
+{% set backup_periodicity = slapparameter_dict.get('backup-periodicity', 'daily') -%}
 {% set full_backup_retention_days = catalog_backup.get('full-retention-days', 7) -%}
 {% set incremental_backup_retention_days = catalog_backup.get('incremental-retention-days', full_backup_retention_days) -%}
 {% set port = slapparameter_dict['tcpv4-port'] %}
@@ -17,7 +18,7 @@
 {%   set ip = (ipv4_set | list)[0] -%}
 {% endif -%}
 
-[publish-mariadb-url]
+[publish]
 recipe = slapos.cookbook:publish.serialised
 {% macro render_database_list(database_list) -%}
 {% set publish_database_list = [] -%}
@@ -78,7 +79,7 @@ about laxist file mode. -#}
 recipe = slapos.cookbook:cron.d
 cron-entries = ${cron:cron-entries}
 name = mariadb-backup
-frequency = 0 22 * * *
+time = {{ dumps(backup_periodicity) }}
 {# When binlogs are enabled:
 # flush-logs: used so no manipulation on binlogs is needed to restore from
 #   full + binlogs. The first binlog after a dump starts from dump snapshot and
@@ -95,7 +96,7 @@ file-glob = ??????????????.sql.gz
 recipe = slapos.cookbook:cron.d
 cron-entries = ${cron:cron-entries}
 name = mariadb-backup-expire
-frequency = 0 22 * * *
+time = {{ dumps(backup_periodicity) }}
 command = {{ parameter_dict['findutils-location'] }}/bin/find "${directory:mariadb-backup-full}" -maxdepth 1 -name "${cron-entry-mariadb-backup:file-glob}" -daystart -mtime +{{ full_backup_retention_days }} -delete
 {%- endif %}
 {%- endif %}
@@ -215,6 +216,20 @@ var = ${buildout:directory}/var
 log = ${:var}/log
 run = ${:var}/run
 
+[resiliency-exclude-file]
+# Generate rdiff exclude file in case of resiliency
+recipe = collective.recipe.template
+input = inline: srv/mariadb/**
+output = ${directory:srv}/exporter.exclude
+
+[resiliency-after-import-script]
+# Generate after import script used by importer instance of webrunner
+recipe = collective.recipe.template
+input = {{ parameter_dict['mariadb-resiliency-after-import-script'] }}
+output = ${directory:srv}/runner-import-restore
+mode = 755
+dash = {{ parameter_dict['dash-location'] }}/bin/dash
+
 [promise]
 recipe = slapos.cookbook:wrapper
 command-line = "{{ parameter_dict['bin-directory'] }}/is-local-tcp-port-opened" "${my-cnf-parameters:ip}" "${my-cnf-parameters:port}"
@@ -241,6 +256,11 @@ source = ${mysql-slowquery-report:output-folder}
 [monitor-parameters]
 port = {{ monitor_port }}
 
+[monitor-instance-parameter]
+monitor-httpd-ipv6 = {{ (ipv6_set | list)[0] }}
+monitor-httpd-port = {{ monitor_port }}
+monitor-title = Mariadb monitor
+
 [log-folder-cgi]
 log-folder = ${directory:log}
 {% endif -%}
@@ -253,11 +273,13 @@ extends =
   {{ parameter_dict['template-monitor'] }}
 {% endif -%}
 parts +=
-  publish-mariadb-url
+  publish
   logrotate-entry-mariadb
   binary-link
   update-mysql
   mysqld
+  resiliency-exclude-file
+  resiliency-after-import-script
   promise
 {% if monitor_port -%}
 # Access to mariadb logs

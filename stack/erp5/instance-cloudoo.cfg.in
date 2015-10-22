@@ -1,14 +1,17 @@
 {% set bin_directory = parameter_dict['buildout-bin-directory'] -%}
 {% set use_ipv6 = slapparameter_dict.get('use-ipv6', False) -%}
 [buildout]
-parts =
-  publish-cloudooo-connection-information
+extends =
+  {{ parameter_dict['template-monitor'] }}
+parts +=
+  publish
   cloudooo-instance
+  resiliency-exclude-file
   promise
   promise-openoffice
   {% if use_ipv6 %}promise-tunnel{% endif %}
 
-[publish-cloudooo-connection-information]
+[publish]
 recipe = slapos.cookbook:publish.serialised
 {% if use_ipv6 -%}
 url = cloudooo://[${ipv6toipv4:ipv6}]:${ipv6toipv4:ipv6-port}/
@@ -33,7 +36,7 @@ wrapper = ${directory:service}/cloudooo
 data-directory = ${directory:cloudooo-data}
 
 environment =
-  LD_LIBRARY_PATH = {{ parameter_dict['cups'] }}/lib:{{ parameter_dict['cups'] }}/lib64:{{ parameter_dict['dbus'] }}/lib:{{ parameter_dict['dbus-glib'] }}/lib:{{ parameter_dict['file'] }}/lib:{{ parameter_dict['fontconfig'] }}/lib:{{ parameter_dict['freetype'] }}/lib:{{ parameter_dict['glib'] }}/lib:{{ parameter_dict['glu'] }}/lib:{{ parameter_dict['libICE'] }}/lib:{{ parameter_dict['libSM'] }}/lib:{{ parameter_dict['libX11'] }}/lib:{{ parameter_dict['libXau'] }}/lib:{{ parameter_dict['libXdmcp'] }}/lib:{{ parameter_dict['libXext'] }}/lib:{{ parameter_dict['libXrender'] }}/lib:{{ parameter_dict['libexpat'] }}/lib:{{ parameter_dict['libffi'] }}/lib:{{ parameter_dict['libffi'] }}/lib64:{{ parameter_dict['libpng12'] }}/lib:{{ parameter_dict['libxcb'] }}/lib:{{ parameter_dict['mesa'] }}/lib:{{ parameter_dict['xdamage'] }}/lib:{{ parameter_dict['xfixes'] }}/lib:{{ parameter_dict['zlib'] }}/lib
+  LD_LIBRARY_PATH = {{ parameter_dict['cairo'] }}/lib:{{ parameter_dict['cups'] }}/lib:{{ parameter_dict['cups'] }}/lib64:{{ parameter_dict['dbus'] }}/lib:{{ parameter_dict['dbus-glib'] }}/lib:{{ parameter_dict['file'] }}/lib:{{ parameter_dict['fontconfig'] }}/lib:{{ parameter_dict['freetype'] }}/lib:{{ parameter_dict['glib'] }}/lib:{{ parameter_dict['glu'] }}/lib:{{ parameter_dict['libICE'] }}/lib:{{ parameter_dict['libSM'] }}/lib:{{ parameter_dict['libX11'] }}/lib:{{ parameter_dict['libXau'] }}/lib:{{ parameter_dict['libXdmcp'] }}/lib:{{ parameter_dict['libXext'] }}/lib:{{ parameter_dict['libXrender'] }}/lib:{{ parameter_dict['libexpat'] }}/lib:{{ parameter_dict['libffi'] }}/lib:{{ parameter_dict['libffi'] }}/lib64:{{ parameter_dict['libpng12'] }}/lib:{{ parameter_dict['libxcb'] }}/lib:{{ parameter_dict['mesa'] }}/lib:{{ parameter_dict['pixman'] }}/lib:{{ parameter_dict['xdamage'] }}/lib:{{ parameter_dict['xfixes'] }}/lib:{{ parameter_dict['zlib'] }}/lib
   FONTCONFIG_FILE = ${fontconfig-instance:conf-path}
 
 # Binary information
@@ -51,6 +54,12 @@ font-folder = ${directory:font}
 url-list = {{ dumps(slapparameter_dict.get('font-url-list', []) | join(' ')) }}
 service-folder = ${directory:service}
 onetimedownload_path = {{ bin_directory }}/onetimedownload
+
+[resiliency-exclude-file]
+# Generate rdiff exclude file in case of resiliency
+recipe = collective.recipe.template
+input = inline: **
+output = ${directory:srv}/exporter.exclude
 
 [promise]
 recipe = slapos.cookbook:check_port_listening
@@ -92,3 +101,8 @@ service = ${:etc}/run
 promise = ${:etc}/promise
 cloudooo-data = ${:srv}/cloudooo
 font = ${:srv}/font
+
+[monitor-instance-parameter]
+monitor-httpd-ipv6 = {{ (ipv6_set | list)[0] }}
+monitor-httpd-port = {{ tcpv4_port + 2 }}
+monitor-title = Cloudooo monitor

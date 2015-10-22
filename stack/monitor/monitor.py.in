@@ -134,7 +134,7 @@ def writeFile(monitor_dict):
   db = sqlite3.connect(db_path)
   init_db(db)
   status = SUCCESS
-  for key, value in monitor_dict.iteritems():
+  for key, value in monitors.iteritems():
     if value:
       element_status = status = FAILURE
     else:
@@ -143,8 +143,8 @@ def writeFile(monitor_dict):
   db.execute("insert into status(timestamp, status) values (?, ?)", (timestamp, status))
   db.commit()
   db.close()
-  monitor_dict['datetime'] = time.ctime(timestamp)
-  json.dump(monitor_dict, open(monitoring_file_json, "w+"))
+  monitors['datetime'] = time.ctime(timestamp)
+  json.dump(monitors, open(monitoring_file_json, "w+"))
 
 def main():
   parser = OptionParser(option_list=option_list)
@@ -163,9 +163,9 @@ def main():
     monitor_dict.update(runServices(pid_dir))
 
   if options.only_stdout:
-    print json.dumps(monitor_dict)
+    print json.dumps(monitors)
   else:
-    writeFile(monitor_dict)
+    writeFiles(monitors)
 
 
 if __name__ == "__main__":
